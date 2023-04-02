@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>Example 2</title>
+</head>
+<body>
+	
+	<canvas id="game-board" width="600" height="400" style="border:1px solid #000000;"></canvas>
+	<script>
+		let canvas = document.getElementById("game-board");	
+		let ctx = canvas.getContext("2d");
+
+		class Ball {
+			constructor(x, y, dir_x, dir_y, radius) {
+				this.x = x;
+				this.y = y;
+				this.dir_x = dir_x;
+				this.dir_y = dir_y;
+				this.radius = radius;
+				
+				if(Math.random() < 0.5) {
+					this.color = "blue";
+				} else {
+					this.color = "red";
+				}
+			}
+						
+			move(balls, start_idx) {
+	
+				// Check if this ball is too close to another ball.
+				for(let idx = start_idx; idx<balls.length; idx++) {
+				
+					let other = balls[idx];
+					let dist = Math.sqrt((this.x-other.x)**2 + (this.y-other.y)**2);
+					let dot_prod = this.dir_x*(-other.dir_x) + this.dir_y*(-other.dir_y);
+					
+					if( dist + other.radius <= this.radius && this != other)
+					{
+						this.radius = Math.sqrt(other.radius**2 + this.radius**2);
+						other = this;
+					}
+				}				
+			
+				if(this.x + this.radius >= canvas.width) {
+					if(this.dir_x > 0) {
+						this.dir_x = -this.dir_x;
+					}
+				}
+				if(this.y+this.radius >= canvas.height) {
+					if(this.dir_y > 0) {
+						this.dir_y = -this.dir_y;
+					}
+				}
+				if(this.x-this.radius <= 0) {
+					if(this.dir_x < 0) {
+						this.dir_x = -this.dir_x;
+					}
+				}
+				if(this.y-this.radius <= 0) {
+					if(this.dir_y < 0 ) {
+						this.dir_y = -this.dir_y;
+					}
+				}
+				
+				this.x = this.x + 0.25*this.dir_x;
+				this.y = this.y + 0.25*this.dir_y;
+			}
+
+			draw() {
+				ctx.fillStyle = this.color;
+				ctx.beginPath();
+				ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+				ctx.fill();			
+			}
+		}
+
+		//let balls = [new Ball(40.0, 40.0, Math.random(), Math.random(), 10*Math.random() + 10)];
+
+		let raw_x = Math.random();
+		let raw_y = Math.random();
+		let dir_x = raw_x/Math.sqrt(raw_x**2 + raw_y**2);
+		let dir_y = raw_y/Math.sqrt(raw_x**2 + raw_y**2);
+
+		let balls = [new Ball(40.0, 40.0, dir_x, dir_y, 10*Math.random() + 10)];
+
+		canvas.addEventListener('click', function(event)  {
+			const rect = canvas.getBoundingClientRect();
+			let raw_x = Math.random();
+			let raw_y = Math.random();
+			let dir_x = raw_x/Math.sqrt(raw_x**2 + raw_y**2);
+			let dir_y = raw_y/Math.sqrt(raw_x**2 + raw_y**2);
+			balls.push(new Ball(event.clientX - rect.left, event.clientY - rect.top,
+					            dir_x, dir_y, 10*Math.random() + 10))
+		});
+
+		function loop() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			for(let idx=0; idx<balls.length; idx++) {
+
+				ball = balls[idx];
+			
+				ball.move(balls, idx+1);
+				ball.draw();
+			}
+		}
+
+		let myTimer=setInterval(loop,1);       
+
+
+	</script>
+	
+</body>

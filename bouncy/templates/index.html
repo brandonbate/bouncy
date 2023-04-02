@@ -1,0 +1,57 @@
+<html>
+<head>
+<title>Bouncy!</title>
+</head>
+<body>
+
+
+	<h1>Bouncy!</h1>
+	<p id="player-info">Waiting for an opponent to join server...</p><br>
+
+	<canvas id="game-board" width="600" height="400" style="border:1px solid #000000;"></canvas>
+	<script>
+		let canvas = document.getElementById("game-board");	
+		let ctx = canvas.getContext("2d");
+
+		const gameSocket = new WebSocket('ws://' + window.location.host + '/ws/play/');
+
+        gameSocket.onmessage = function(e) {
+
+            const data = JSON.parse(e.data);
+
+			if(data.type == "start_game") {
+				document.getElementById('player-info').innerText = "The game has started!";				
+			} else if(data.type == "ball_move") {
+				console.log(data.ball_positions);
+			}
+
+			//ctx.fillStyle = this.color;
+			//ctx.beginPath();
+			//ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+			//ctx.fill();						
+		}
+
+
+        gameSocket.onclose = function(e) {
+            console.error('Game socket closed unexpectedly');
+        };
+
+		window.onbeforeunload = function() {
+			gameSocket.onclose = function () {}; // disable onclose handler first
+			gameSocket.close();
+		};
+
+		canvas.addEventListener('click', function(e) {
+			const rect = canvas.getBoundingClientRect();
+			const x = event.clientX - rect.left;
+			const y = event.clientY - rect.top;
+
+            gameSocket.send(JSON.stringify({"x":x, "y":y}));
+		});
+		
+
+	</script>
+
+
+</body>
+</html>
