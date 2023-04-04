@@ -22,12 +22,18 @@
 			if(data.type == "start_game") {
 				document.getElementById('player-info').innerText = "The game has started!";	
 			} else if(data.type == "game_update") {
-				console.log(data);
-				
-				//ctx.fillStyle = this.color;
-				//ctx.beginPath();
-				//ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-				//ctx.fill();						
+			
+
+				balls = data.ball_data
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+				for(let i=0; i<balls.length; i++) {
+					ball = balls[i];
+					ctx.fillStyle = ball['color'];
+					ctx.beginPath();
+					ctx.arc(ball['x'], ball['y'], ball['radius'], 0, 2 * Math.PI);
+					ctx.fill();						
+				}
 			}
 		}
 

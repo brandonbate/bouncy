@@ -1,6 +1,8 @@
 import json
 import random
 import string
+import redis
+import pickle
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.consumer import SyncConsumer
 from bouncy.tasks import play
@@ -84,6 +86,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.game_id, self.channel_name)
 
     async def start_game(self, data):
+        self.r = redis.Redis()
+
         self.game_id = data['game_id']
         self.color = data['color']
         await self.channel_layer.group_add(self.game_id, self.channel_name)
@@ -91,20 +95,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	# Receives communication from a celery task.           
     async def game_update(self, data):
-        await self.send(text_data=json.dumps(data))
+        ball_data = pickle.loads(data['data'])
+        await self.send(text_data=json.dumps({'type':'game_update', 'ball_data':ball_data}))
 
     # The only input sent by the user is new ball spawn locations.
     async def receive(self, text_data):
     
         ball_data = json.loads(text_data)
-        print("new ball at (" + str(ball_data['x']) + "," + str(ball_data['y']) + ") of color " + self.color)
+        ball_data['color'] = self.color
+            
         # Passes data to the celery task
-        self.channel_layer.send(
-            self.game_id,
-            {
-                "x": ball_data['x'],
-                "y": ball_data['y'],
-                "color": self.color
-            },
-        )
-        print("sent to celery")
+        self.r.rpush(self.game_id, pickle.dumps(ball_data))
+
+        
